@@ -1,7 +1,1 @@
 
-export async function GET(request) {
-  return Response.json({ 
-    success: true, 
-    message: "API works!" 
-  });
-}
