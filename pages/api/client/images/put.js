@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import sharp from 'sharp'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -23,11 +24,25 @@ export default function handler(req, res) {
     try {
       const buffer = Buffer.concat(chunks)
 
+      // Compress image before saving
+      const compressed = await sharp(buffer)
+        .resize(800, 800, {
+          fit: 'inside',        // keep aspect ratio
+          withoutEnlargement: true  // don't upscale small images
+        })
+        .jpeg({ 
+          quality: 70,          // 70% quality (good balance)
+          progressive: true     // faster loading
+        })
+        .toBuffer()
+
+      console.log(`Original: ${buffer.length} bytes → Compressed: ${compressed.length} bytes`)
+
       const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
 
       const { error } = await supabase.storage
         .from('worker-photos')
-        .upload(s3Key, buffer, {
+        .upload(s3Key, compressed, {
           contentType: 'image/jpeg',
           upsert: true
         })
