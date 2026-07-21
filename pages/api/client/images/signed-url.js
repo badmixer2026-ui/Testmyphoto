@@ -16,10 +16,15 @@ export default async function handler(req, res) {
 
   const { regNo, applicantNo, fileName } = req.body
 
-  const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
+  // Add timestamp so each upload gets unique filename
+  const timestamp = Date.now()
+  const ext = (fileName || 'photo.jpg').split('.').pop()
+  const uniqueFileName = `${timestamp}.${ext}`
+
+  const s3Key = `${regNo}/${applicantNo}/${uniqueFileName}`
   const s3Url = `${process.env.SUPABASE_URL}/storage/v1/object/public/worker-photos/${s3Key}`
 
-  const uploadUrl = `https://testmyphoto.vercel.app/api/client/images/put?regNo=${encodeURIComponent(regNo)}&applicantNo=${encodeURIComponent(applicantNo)}&fileName=${encodeURIComponent(fileName || 'photo.jpg')}`
+  const uploadUrl = `https://testmyphoto.vercel.app/api/client/images/put?regNo=${encodeURIComponent(regNo)}&applicantNo=${encodeURIComponent(applicantNo)}&fileName=${encodeURIComponent(uniqueFileName)}`
 
   return res.json({
     success: true,
