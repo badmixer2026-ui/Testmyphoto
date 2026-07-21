@@ -16,27 +16,29 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Get all photos for this worker
     const { data, error } = await supabase
       .from('workers')
       .select('photo_url')
       .eq('reg_no', regNo)
       .eq('applicant_no', applicantNo)
-      .order('uploaded_at', { ascending: false })
-      .limit(1)
-      .single()
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       return res.json({ 
         success: false, 
         message: 'No photo found' 
       })
     }
 
+    // Pick a random one
+    const random = data[Math.floor(Math.random() * data.length)]
+
     return res.json({ 
       success: true,
       data: { 
-        fetchUrl: data.photo_url,
-        s3Url: data.photo_url
+        fetchUrl: random.photo_url,
+        s3Url: random.photo_url,
+        total: data.length
       }
     })
 
