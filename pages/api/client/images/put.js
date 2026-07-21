@@ -9,40 +9,44 @@ export const config = {
   api: { bodyParser: false }
 }
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
   if (req.method !== 'PUT') {
     return res.status(200).end()
   }
 
   const { regNo, applicantNo, fileName } = req.query
+  const chunks = []
 
-  try {
-    // Read raw bytes
-    const chunks = []
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => chunks.push(chunk))
-      req.on('end', resolve)
-      req.on('error', reject)
-    })
-    const buffer = Buffer.concat(chunks)
+  req.on('data', chunk => chunks.push(chunk))
 
-    const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
+  req.on('end', async () => {
+    try {
+      const buffer = Buffer.concat(chunks)
 
-    // Upload to Supabase
-    const { error } = await supabase.storage
-      .from('worker-photos')
-      .upload(s3Key, buffer, {
-        contentType: 'image/jpeg',
-        upsert: true
-      })
+      const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
 
-    if (error) throw error
+      const { error } = await supabase.storage
+        .from('worker-photos')
+        .upload(s3Key, buffer, {
+          contentType: 'image/jpeg',
+          upsert: true
+        })
 
-    // Return 200 — app checks status code only
-    return res.status(200).end()
+      if (error) {
+        console.error('Supabase error:', error.message)
+        return res.status(500).end()
+      }
 
-  } catch (err) {
-    console.error('PUT error:', err.message)
+      return res.status(200).end()
+
+    } catch (err) {
+      console.error('PUT handler error:', err.message)
+      return res.status(500).end()
+    }
+  })
+
+  req.on('error', err => {
+    console.error('Request error:', err.message)
     return res.status(500).end()
-  }
+  })
 }
