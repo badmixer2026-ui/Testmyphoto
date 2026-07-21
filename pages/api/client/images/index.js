@@ -10,10 +10,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { regNo, applicantNo, s3Url, s3Key, applicantName, districtCode, panchayatCode } = req.body
+  const { regNo, applicantNo, s3Url, s3Key } = req.body
 
   try {
-    await supabase.from('workers').upsert({
+    // INSERT not upsert — store each photo as separate row
+    await supabase.from('workers').insert({
       reg_no: regNo,
       applicant_no: applicantNo,
       photo_url: s3Url,
