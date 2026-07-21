@@ -19,8 +19,7 @@ export default async function handler(req, res) {
   const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
   const s3Url = `${process.env.SUPABASE_URL}/storage/v1/object/public/worker-photos/${s3Key}`
 
-  // Return noop URL — actual upload happens in Step 2 PUT to /api/client/images/put
-  const uploadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/client/images/put?regNo=${encodeURIComponent(regNo)}&applicantNo=${encodeURIComponent(applicantNo)}&fileName=${encodeURIComponent(fileName || 'photo.jpg')}`
+  const uploadUrl = `https://testmyphoto.vercel.app/api/client/images/put?regNo=${encodeURIComponent(regNo)}&applicantNo=${encodeURIComponent(applicantNo)}&fileName=${encodeURIComponent(fileName || 'photo.jpg')}`
 
   return res.json({
     success: true,
