@@ -10,14 +10,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { regNo, applicantNo, s3Key, s3Url, applicantName } = req.body
-
-  if (!regNo || !applicantNo) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'regNo and applicantNo required' 
-    })
-  }
+  const { regNo, applicantNo, s3Url, s3Key, applicantName, districtCode, panchayatCode } = req.body
 
   try {
     await supabase.from('workers').upsert({
@@ -27,10 +20,7 @@ export default async function handler(req, res) {
       uploaded_at: new Date().toISOString()
     })
 
-    return res.json({ 
-      success: true, 
-      message: 'Photo saved successfully' 
-    })
+    return res.json({ success: true })
 
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message })
