@@ -14,24 +14,36 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { regNo, applicantNo, fileName } = req.body
+  const { regNo, applicantNo } = req.body
 
-  // Add timestamp so each upload gets unique filename
-  const timestamp = Date.now()
-  const ext = (fileName || 'photo.jpg').split('.').pop()
-  const uniqueFileName = `${timestamp}.${ext}`
+  if (!regNo || !applicantNo) {
+    return res.status(400).json({ success: false, message: 'regNo and applicantNo required' })
+  }
 
+  // Count existing photos for this worker
+  const { data: existing } = await supabase
+    .from('workers')
+    .select('id')
+    .eq('reg_no', regNo)
+    .eq('applicant_no', applicantNo)
+
+  const count = existing ? existing.length : 0
+
+  if (count >= 6) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Maximum 6 photos reached for this worker' 
+    })
+  }
+
+  // Unique filename using timestamp
+  const uniqueFileName = `${Date.now()}.jpg`
   const s3Key = `${regNo}/${applicantNo}/${uniqueFileName}`
   const s3Url = `${process.env.SUPABASE_URL}/storage/v1/object/public/worker-photos/${s3Key}`
-
   const uploadUrl = `https://testmyphoto.vercel.app/api/client/images/put?regNo=${encodeURIComponent(regNo)}&applicantNo=${encodeURIComponent(applicantNo)}&fileName=${encodeURIComponent(uniqueFileName)}`
 
   return res.json({
     success: true,
-    data: {
-      uploadUrl,
-      s3Key,
-      s3Url
-    }
+    data: { uploadUrl, s3Key, s3Url }
   })
 }
