@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     // Get ALL photos for this worker
     const { data, error } = await supabase
       .from('workers')
-      .select('photo_url')
+      .select('photo_url, id')
       .eq('reg_no', regNo)
       .eq('applicant_no', applicantNo)
 
@@ -24,14 +24,17 @@ export default async function handler(req, res) {
       return res.json({ success: false, message: 'No photo found' })
     }
 
-    // Pick random photo
-    const random = data[Math.floor(Math.random() * data.length)]
+    // Shuffle array properly
+    const shuffled = data.sort(() => Math.random() - 0.5)
+
+    // Pick first after shuffle = truly random
+    const picked = shuffled[0]
 
     return res.json({
       success: true,
       data: {
-        fetchUrl: random.photo_url,
-        s3Url: random.photo_url,
+        fetchUrl: picked.photo_url,
+        s3Url: picked.photo_url,
         total: data.length
       }
     })
