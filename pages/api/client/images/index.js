@@ -12,14 +12,21 @@ export default async function handler(req, res) {
 
   const { regNo, applicantNo, s3Url, s3Key } = req.body
 
+  if (!regNo || !applicantNo || !s3Url) {
+    return res.status(400).json({ success: false, message: 'Missing fields' })
+  }
+
   try {
-    // INSERT not upsert — store each photo as separate row
-    await supabase.from('workers').insert({
+    // INSERT new row every time (not upsert)
+    const { error } = await supabase.from('workers').insert({
       reg_no: regNo,
       applicant_no: applicantNo,
       photo_url: s3Url,
+      s3_key: s3Key,
       uploaded_at: new Date().toISOString()
     })
+
+    if (error) throw error
 
     return res.json({ success: true })
 
