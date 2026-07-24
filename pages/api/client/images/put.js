@@ -22,25 +22,24 @@ export default function handler(req, res) {
   req.on('end', async () => {
     try {
       const buffer = Buffer.concat(chunks)
-
-      const s3Key = `${regNo}/${applicantNo}/${fileName || 'photo.jpg'}`
+      const s3Key = `${regNo}/${applicantNo}/${fileName}`
 
       const { error } = await supabase.storage
         .from('worker-photos')
         .upload(s3Key, buffer, {
           contentType: 'image/jpeg',
-          upsert: true
+          upsert: false  // never overwrite existing
         })
 
       if (error) {
-        console.error('Supabase error:', error.message)
+        console.error('Supabase storage error:', error.message)
         return res.status(500).end()
       }
 
       return res.status(200).end()
 
     } catch (err) {
-      console.error('PUT handler error:', err.message)
+      console.error('PUT error:', err.message)
       return res.status(500).end()
     }
   })
