@@ -13,35 +13,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Try both string and number match
     const { data, error } = await supabase
       .from('workers')
-      .select('photo_url, id')
+      .select('photo_url')
       .eq('reg_no', regNo)
-      .or(`applicant_no.eq.${applicantNo},applicant_no.eq."${applicantNo}"`)
+      .eq('applicant_no', applicantNo)
 
     if (error || !data || data.length === 0) {
-      // Try with just reg_no in case applicant_no type differs
-      const { data: data2 } = await supabase
-        .from('workers')
-        .select('photo_url')
-        .eq('reg_no', regNo)
-
-      if (!data2 || data2.length === 0) {
-        return res.json({ success: false, message: 'No photo found' })
-      }
-
-      const picked = data2[Math.floor(Math.random() * data2.length)]
-      return res.json({
-        success: true,
-        valid: true,
-        data: {
-          fetchUrl: picked.photo_url,
-          s3Url: picked.photo_url
-        }
-      })
+      return res.json({ success: false, message: 'No photo found' })
     }
 
+    // True random pick from all photos
     const picked = data[Math.floor(Math.random() * data.length)]
 
     return res.json({
