@@ -9,14 +9,11 @@ export default async function handler(req, res) {
   const { regNo, applicantNo } = req.query
 
   if (!regNo || !applicantNo) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'regNo and applicantNo required' 
-    })
+    return res.status(400).json({ success: false, message: 'regNo and applicantNo required' })
   }
 
   try {
-    // Get all photos for this worker
+    // Get ALL photos for this worker
     const { data, error } = await supabase
       .from('workers')
       .select('photo_url')
@@ -24,18 +21,15 @@ export default async function handler(req, res) {
       .eq('applicant_no', applicantNo)
 
     if (error || !data || data.length === 0) {
-      return res.json({ 
-        success: false, 
-        message: 'No photo found' 
-      })
+      return res.json({ success: false, message: 'No photo found' })
     }
 
-    // Pick a random one
+    // Pick random photo
     const random = data[Math.floor(Math.random() * data.length)]
 
-    return res.json({ 
+    return res.json({
       success: true,
-      data: { 
+      data: {
         fetchUrl: random.photo_url,
         s3Url: random.photo_url,
         total: data.length
