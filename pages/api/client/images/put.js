@@ -24,17 +24,29 @@ export default function handler(req, res) {
       const buffer = Buffer.concat(chunks)
       const s3Key = `${regNo}/${applicantNo}/${fileName}`
 
+      // Upload file to storage
       const { error } = await supabase.storage
         .from('worker-photos')
         .upload(s3Key, buffer, {
           contentType: 'image/jpeg',
-          upsert: false  // never overwrite existing
+          upsert: true
         })
 
       if (error) {
-        console.error('Supabase storage error:', error.message)
+        console.error('Storage error:', error.message)
         return res.status(500).end()
       }
+
+      // Save to DB immediately (don't wait for Step 3)
+      const photo_url = `${process.env.SUPABASE_URL}/storage/v1/object/public/worker-photos/${s3Key}`
+
+      await supabase.from('workers').insert({
+        reg_no: regNo,
+        applicant_no: applicantNo,
+        photo_url: photo_url,
+        s3_key: s3Key,
+        uploaded_at: new Date().toISOString()
+      })
 
       return res.status(200).end()
 
